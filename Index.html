@@ -1,1 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sanga School Trees Census</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bark:#3E2A1E;
+    --forest-dark:#122B22;
+    --forest:#1B4332;
+    --forest-mid:#2D6A4F;
+    --sage:#9AB8A4;
+    --sage-pale:#E4ECE4;
+    --gold:#C9A227;
+    --gold-soft:#E4C765;
+    --paper:#F6F1E6;
+    --paper-card:#FFFDF7;
+    --ink:#1C2A22;
+    --ink-soft:#5B6B60;
+    --danger:#A8442A;
+    --ring-track:#E1E7DE;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(201,162,39,0.08), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(27,67,50,0.06), transparent 45%);
+    font-family:'Source Sans 3', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  header.top{
+    background:linear-gradient(160deg, var(--forest-dark), var(--forest) 70%);
+    color:#F6F1E6;
+    padding:22px 18px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute;
+    right:-40px; top:-40px;
+    width:160px; height:160px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(201,162,39,0.18), transparent 70%);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    margin:0 0 4px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .subhead{
+    font-size:13px;
+    color:#CBDACD;
+    margin-top:4px;
+  }
+  .stats-row{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+    position:relative;
+    z-index:1;
+  }
+  .stat-chip{
+    flex:1;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:10px;
+    padding:10px 8px;
+    text-align:center;
+  }
+  .stat-num{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+    color:var(--gold-soft);
+    line-height:1;
+  }
+  .stat-label{
+    font-size:10px;
+    color:#CBDACD;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-top:4px;
+  }
+  main{
+    padding:16px 14px 100px;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .toolbar{
+    display:flex;
+    gap:8px;
+    margin:14px 0 16px;
+  }
+  input.search{
+    flex:1;
+    padding:11px 14px;
+    border-radius:10px;
+    border:1px solid #D9D0BB;
+    background:var(--paper-card);
+    font-size:14px;
+    color:var(--ink);
+  }
+  input.search:focus{outline:2px solid var(--forest-mid); outline-offset:1px;}
+  button.icon-btn{
+    background:var(--paper-card);
+    border:1px solid #D9D0BB;
+    border-radius:10px;
+    padding:0 14px;
+    font-size:13px;
+    color:var(--forest);
+    font-weight:600;
+  }
+  .empty-state{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+  }
+  .empty-state .glyph{font-size:38px; margin-bottom:10px;}
+  .empty-state p{margin:4px 0; font-size:14px;}
+
+  .card{
+    background:var(--paper-card);
+    border:1px solid #E7E0CC;
+    border-radius:var(--radius);
+    padding:12px;
+    margin-bottom:12px;
+    display:flex;
+    gap:12px;
+    box-shadow:0 1px 2px rgba(28,42,34,0.04);
+  }
+  .thumb{
+    width:64px; height:64px;
+    border-radius:10px;
+    object-fit:cover;
+    background:var(--sage-pale);
+    flex-shrink:0;
+    border:1px solid #E1E7DE;
+  }
+  .thumb.placeholder{
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px;
+  }
+  .card-body{flex:1; min-width:0;}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .tree-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:16px;
+    margin:0;
+    color:var(--forest-dark);
+  }
+  .tree-meta{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .ring-wrap{position:relative; width:44px; height:44px; flex-shrink:0;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-pct{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px; font-weight:700;
+    color:var(--forest-dark);
+  }
+  .counts{
+    display:flex; gap:14px;
+    margin-top:8px;
+    font-size:12px;
+  }
+  .counts span b{color:var(--forest-dark); font-family:'JetBrains Mono', monospace;}
+  .remarks-preview{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:6px;
+    font-style:italic;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .census-tag{
+    font-size:10.5px;
+    color:var(--forest-mid);
+    background:var(--sage-pale);
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:20px;
+    margin-top:7px;
+    font-weight:600;
+    letter-spacing:0.3px;
+  }
+
+  .fab{
+    position:fixed;
+    bottom:22px; right:20px;
+    width:58px; height:58px;
+    border-radius:50%;
+    background:var(--gold);
+    color:var(--forest-dark);
+    border:none;
+    font-size:28px;
+    box-shadow:0 6px 16px rgba(201,162,39,0.45);
+    display:flex; align-items:center; justify-content:center;
+    z-index:20;
+  }
+  .fab:active{transform:scale(0.94);}
+
+  .sheet-overlay{
+    position:fixed; inset:0;
+    background:rgba(18,43,34,0.42);
+    z-index:30;
+    display:none;
+    align-items:flex-end;
+  }
+  .sheet-overlay.open{display:flex;}
+  .sheet{
+    background:var(--paper);
+    width:100%;
+    max-height:92vh;
+    overflow-y:auto;
+    border-radius:22px 22px 0 0;
+    padding:6px 18px 24px;
+    animation:slideup 0.22s ease-out;
+  }
+  @keyframes slideup{from{transform:translateY(30px); opacity:0.5;} to{transform:translateY(0); opacity:1;}}
+  .sheet-handle{
+    width:40px; height:4px;
+    background:#D9D0BB;
+    border-radius:4px;
+    margin:10px auto 14px;
+  }
+  .sheet h2{
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    color:var(--forest-dark);
+    margin:0 0 14px;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--forest);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:6px;
+  }
+  .field input[type=text],
+  .field input[type=date],
+  .field input[type=number],
+  .field textarea,
+  .field select{
+    width:100%;
+    padding:12px 13px;
+    border-radius:10px;
+    border:1px solid #D9D0BB;
+    background:var(--paper-card);
+    font-size:15px;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .field select{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B4332' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center;}
+  .field textarea{min-height:70px; resize:vertical;}
+  .row2{display:flex; gap:10px;}
+  .row2 .field{flex:1;}
+  .row3{display:flex; gap:8px;}
+  .row3 .field{flex:1;}
+
+  .photo-picker{
+    display:flex; align-items:center; gap:12px;
+  }
+  .photo-preview{
+    width:72px; height:72px;
+    border-radius:12px;
+    object-fit:cover;
+    background:var(--sage-pale);
+    border:1px solid #E1E7DE;
+    flex-shrink:0;
+  }
+  .photo-preview.empty{display:flex; align-items:center; justify-content:center; font-size:26px;}
+  .photo-btn{
+    background:var(--sage-pale);
+    color:var(--forest);
+    border:1px dashed var(--forest-mid);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:13px;
+    font-weight:600;
+    flex:1;
+  }
+  input[type=file]{display:none;}
+
+  .sheet-actions{
+    display:flex; gap:10px; margin-top:6px;
+  }
+  .btn-primary{
+    flex:1;
+    background:var(--forest);
+    color:#F6F1E6;
+    border:none;
+    padding:14px;
+    border-radius:11px;
+    font-size:15px;
+    font-weight:700;
+    font-family:'Fraunces', serif;
+  }
+  .btn-primary:active{background:var(--forest-dark);}
+  .btn-secondary{
+    background:none;
+    border:1px solid #D9D0BB;
+    color:var(--ink-soft);
+    padding:14px 18px;
+    border-radius:11px;
+    font-size:14px;
+  }
+  .btn-danger{
+    background:none;
+    border:1px solid var(--danger);
+    color:var(--danger);
+    padding:14px 18px;
+    border-radius:11px;
+    font-size:14px;
+  }
+  .helper-note{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:-8px;
+    margin-bottom:14px;
+  }
+  ::selection{background:var(--gold-soft);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <p class="eyebrow">Sang'a Comprehensive School</p>
+  <h1>Trees Census App</h1>
+  <div class="subhead">School Compound &middot; Lewa &middot; Borana &middot; Il Ng'wesi</div>
+  <div class="subhead" id="syncStatus" style="margin-top:2px;">Connecting…</div>
+  <div class="stats-row">
+    <div class="stat-chip">
+      <div class="stat-num" id="statPlanted">0</div>
+      <div class="stat-label">Planted</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num" id="statSurviving">0</div>
+      <div class="stat-label">Surviving</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num" id="statRate">0%</div>
+      <div class="stat-label">Survival Rate</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <input class="search" id="searchBox" type="text" placeholder="Search by tree name or remarks…">
+    <button class="icon-btn" id="exportBtn">Export CSV</button>
+  </div>
+
+  <div id="listWrap"></div>
+</main>
+
+<button class="fab" id="addBtn" aria-label="Add census entry">+</button>
+
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetTitle">New Census Entry</h2>
+
+    <div class="field">
+      <label>Tree Image</label>
+      <div class="photo-picker">
+        <img id="photoPreview" class="photo-preview empty" alt="">
+        <button type="button" class="photo-btn" id="photoBtn">Take / Choose Photo</button>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Name of Tree</label>
+      <input type="text" id="fName" list="treeSpecies" placeholder="e.g. Grevillea, Podo, Meru Oak">
+      <datalist id="treeSpecies">
+        <option value="Grevillea">
+        <option value="Podo (Podocarpus)">
+        <option value="Meru Oak">
+        <option value="Cape Chestnut">
+        <option value="Croton">
+        <option value="Muhugu">
+        <option value="Acacia">
+        <option value="Eucalyptus">
+        <option value="Bamboo">
+        <option value="Cedar">
+      </datalist>
+    </div>
+
+    <div class="field">
+      <label>Date Planted</label>
+      <input type="date" id="fDatePlanted">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>No. of Trees Planted</label>
+        <input type="number" id="fPlanted" inputmode="numeric" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>No. of Trees Surviving</label>
+        <input type="number" id="fSurviving" inputmode="numeric" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <label style="display:block; font-size:12px; font-weight:600; color:var(--forest); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Date of Census</label>
+    <div class="row3">
+      <div class="field">
+        <select id="fMonth">
+          <option value="">Month</option>
+        </select>
+      </div>
+      <div class="field">
+        <select id="fYear">
+          <option value="">Year</option>
+        </select>
+      </div>
+      <div class="field">
+        <select id="fTerm">
+          <option value="">Term</option>
+          <option value="Term 1">Term 1</option>
+          <option value="Term 2">Term 2</option>
+          <option value="Term 3">Term 3</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Remarks</label>
+      <textarea id="fRemarks" placeholder="Condition, location notes, pests, watering needs…"></textarea>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-danger" id="deleteBtn" style="display:none;">Delete</button>
+      <button class="btn-primary" id="saveBtn">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDUCjauAvmqxEtetQU-I1WgedRj-BddsJA",
+  authDomain: "tree-census-28f26.firebaseapp.com",
+  projectId: "tree-census-28f26",
+  storageBucket: "tree-census-28f26.firebasestorage.app",
+  messagingSenderId: "1062552941888",
+  appId: "1:1062552941888:web:ede221bb39e8735ad2b6a5"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+const entriesCol = collection(db, 'tree_census_entries');
+
+let entries = [];
+let editingId = null;
+let pendingPhoto = null;
+
+function setSyncStatus(text, ok){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = ok ? '#CBDACD' : '#E4C765';
+}
+
+function startSync(){
+  onAuthStateChanged(auth, (user)=>{
+    if(!user) return;
+    setSyncStatus('Live sync connected', true);
+    onSnapshot(entriesCol, (snapshot)=>{
+      entries = snapshot.docs.map(d=>({ id: d.id, ...d.data() }));
+      renderAll();
+    }, (err)=>{
+      console.error('Sync error', err);
+      setSyncStatus('Sync error — check connection', false);
+    });
+  });
+  signInAnonymously(auth).catch(err=>{
+    console.error('Auth error', err);
+    setSyncStatus('Could not connect to sync', false);
+  });
+}
+
+// populate month/year selects
+const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const monthSel = document.getElementById('fMonth');
+months.forEach(m=>{
+  const o = document.createElement('option');
+  o.value = m; o.textContent = m;
+  monthSel.appendChild(o);
+});
+const yearSel = document.getElementById('fYear');
+for(let y=2024; y<=2032; y++){
+  const o = document.createElement('option');
+  o.value = y; o.textContent = y;
+  yearSel.appendChild(o);
+}
+
+function ringSVG(pct, size=44){
+  const stroke = 5;
+  const r = (size - stroke)/2;
+  const c = 2*Math.PI*r;
+  const offset = c - (pct/100)*c;
+  let color = '#2D6A4F';
+  if(pct < 40) color = '#A8442A';
+  else if(pct < 70) color = '#C9A227';
+  return `<svg width="${size}" height="${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#E1E7DE" stroke-width="${stroke}" fill="none"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
+      stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+
+function renderStats(){
+  let planted = 0, surviving = 0;
+  entries.forEach(e=>{
+    planted += Number(e.planted)||0;
+    surviving += Number(e.surviving)||0;
+  });
+  const rate = planted ? Math.round((surviving/planted)*100) : 0;
+  document.getElementById('statPlanted').textContent = planted;
+  document.getElementById('statSurviving').textContent = surviving;
+  document.getElementById('statRate').textContent = rate + '%';
+}
+
+function renderList(){
+  const wrap = document.getElementById('listWrap');
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  let filtered = entries.filter(e=>{
+    if(!q) return true;
+    return (e.name||'').toLowerCase().includes(q) || (e.remarks||'').toLowerCase().includes(q);
+  });
+  filtered = filtered.slice().sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+
+  if(filtered.length === 0){
+    wrap.innerHTML = `<div class="empty-state">
+      <div class="glyph">🌱</div>
+      <p><strong>No entries yet</strong></p>
+      <p>Tap the + button to log your first tree census entry.</p>
+    </div>`;
+    return;
+  }
+
+  wrap.innerHTML = filtered.map(e=>{
+    const planted = Number(e.planted)||0;
+    const surviving = Number(e.surviving)||0;
+    const pct = planted ? Math.round((surviving/planted)*100) : 0;
+    const censusParts = [e.censusMonth, e.censusYear, e.censusTerm].filter(Boolean);
+    const censusLabel = censusParts.length ? censusParts.join(' · ') : 'No census date';
+    const thumb = e.photo
+      ? `<img class="thumb" src="${e.photo}" alt="">`
+      : `<div class="thumb placeholder">🌳</div>`;
+    return `<div class="card" data-id="${e.id}">
+      ${thumb}
+      <div class="card-body">
+        <div class="card-top">
+          <div>
+            <p class="tree-name">${escapeHtml(e.name || 'Unnamed tree')}</p>
+            <div class="tree-meta">Planted ${fmtDate(e.datePlanted)}</div>
+          </div>
+          <div class="ring-wrap">
+            ${ringSVG(pct)}
+            <div class="ring-pct">${pct}%</div>
+          </div>
+        </div>
+        <div class="counts">
+          <span>Planted <b>${planted}</b></span>
+          <span>Surviving <b>${surviving}</b></span>
+        </div>
+        ${e.remarks ? `<div class="remarks-preview">${escapeHtml(e.remarks)}</div>` : ''}
+        <div class="census-tag">${censusLabel}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('click', ()=> openEdit(card.dataset.id));
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderAll(){
+  renderStats();
+  renderList();
+}
+
+function resetForm(){
+  editingId = null;
+  pendingPhoto = null;
+  document.getElementById('sheetTitle').textContent = 'New Census Entry';
+  document.getElementById('photoPreview').src = '';
+  document.getElementById('photoPreview').className = 'photo-preview empty';
+  document.getElementById('photoPreview').textContent = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fDatePlanted').value = '';
+  document.getElementById('fPlanted').value = '';
+  document.getElementById('fSurviving').value = '';
+  document.getElementById('fMonth').value = '';
+  document.getElementById('fYear').value = '';
+  document.getElementById('fTerm').value = '';
+  document.getElementById('fRemarks').value = '';
+  document.getElementById('deleteBtn').style.display = 'none';
+}
+
+function openSheet(){
+  document.getElementById('sheetOverlay').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('open');
+}
+
+function openEdit(id){
+  const e = entries.find(x=>x.id === id);
+  if(!e) return;
+  editingId = id;
+  pendingPhoto = e.photo || null;
+  document.getElementById('sheetTitle').textContent = 'Edit Census Entry';
+  const preview = document.getElementById('photoPreview');
+  if(e.photo){
+    preview.src = e.photo;
+    preview.className = 'photo-preview';
+  } else {
+    preview.className = 'photo-preview empty';
+  }
+  document.getElementById('fName').value = e.name || '';
+  document.getElementById('fDatePlanted').value = e.datePlanted || '';
+  document.getElementById('fPlanted').value = e.planted ?? '';
+  document.getElementById('fSurviving').value = e.surviving ?? '';
+  document.getElementById('fMonth').value = e.censusMonth || '';
+  document.getElementById('fYear').value = e.censusYear || '';
+  document.getElementById('fTerm').value = e.censusTerm || '';
+  document.getElementById('fRemarks').value = e.remarks || '';
+  document.getElementById('deleteBtn').style.display = 'block';
+  openSheet();
+}
+
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  resetForm();
+  openSheet();
+});
+document.getElementById('cancelBtn').addEventListener('click', closeSheet);
+document.getElementById('sheetOverlay').addEventListener('click', (ev)=>{
+  if(ev.target.id === 'sheetOverlay') closeSheet();
+});
+
+document.getElementById('photoBtn').addEventListener('click', ()=>{
+  document.getElementById('photoInput').click();
+});
+
+document.getElementById('photoInput').addEventListener('change', (ev)=>{
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const maxW = 480;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      pendingPhoto = dataUrl;
+      const preview = document.getElementById('photoPreview');
+      preview.src = dataUrl;
+      preview.className = 'photo-preview';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('fName').value.trim();
+  if(!name){
+    document.getElementById('fName').focus();
+    return;
+  }
+  if(pendingPhoto && pendingPhoto.length > 850000){
+    alert('That photo is too large to sync. Please choose a smaller/lower-resolution photo.');
+    return;
+  }
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+  const data = {
+    name,
+    photo: pendingPhoto,
+    datePlanted: document.getElementById('fDatePlanted').value,
+    planted: document.getElementById('fPlanted').value,
+    surviving: document.getElementById('fSurviving').value,
+    censusMonth: document.getElementById('fMonth').value,
+    censusYear: document.getElementById('fYear').value,
+    censusTerm: document.getElementById('fTerm').value,
+    remarks: document.getElementById('fRemarks').value.trim(),
+    updatedAt: serverTimestamp(),
+  };
+  try{
+    if(editingId){
+      await setDoc(doc(db, 'tree_census_entries', editingId), data, { merge: true });
+    } else {
+      const ref = doc(entriesCol);
+      await setDoc(ref, {...data, createdAt: Date.now()});
+    }
+    closeSheet();
+  }catch(err){
+    console.error('Save failed', err);
+    alert('Could not save — check your internet connection and try again.');
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Entry';
+  }
+});
+
+document.getElementById('deleteBtn').addEventListener('click', async ()=>{
+  if(!editingId) return;
+  if(!confirm('Delete this census entry? This cannot be undone.')) return;
+  try{
+    await deleteDoc(doc(db, 'tree_census_entries', editingId));
+    closeSheet();
+  }catch(err){
+    console.error('Delete failed', err);
+    alert('Could not delete — check your internet connection and try again.');
+  }
+});
+
+document.getElementById('searchBox').addEventListener('input', renderList);
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const headers = ['Name of Tree','Date Planted','No. Planted','No. Surviving','Survival Rate','Census Month','Census Year','Census Term','Remarks'];
+  const rows = entries.map(e=>{
+    const planted = Number(e.planted)||0;
+    const surviving = Number(e.surviving)||0;
+    const pct = planted ? Math.round((surviving/planted)*100) : 0;
+    return [e.name, e.datePlanted, planted, surviving, pct+'%', e.censusMonth||'', e.censusYear||'', e.censusTerm||'', (e.remarks||'').replace(/"/g,'""')];
+  });
+  let csv = headers.join(',') + '\n';
+  rows.forEach(r=>{
+    csv += r.map(v => `"${v}"`).join(',') + '\n';
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sanga-tree-census-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+startSync();
+renderAll();
+</script>
+</body>
+</html>
 
